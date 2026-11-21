@@ -1693,8 +1693,8 @@ public class OnlineGameRoom {
         int pos = sq.getPosition();
         dto.put("position", pos);
         dto.put("name", sq.getName());
-        dto.put("cellImg", "assets/square/cells_40/" + CELL_IMAGE_FILES[pos]);
-        dto.put("uprightImg", "assets/square/cells_40_upright/" + CELL_IMAGE_FILES[pos]);
+        dto.put("cellImg", "assets/square/cells_40/" + CELL_IMAGE_FILES[pos] + "?v=2");
+        dto.put("uprightImg", "assets/square/cells_40_upright/" + CELL_IMAGE_FILES[pos] + "?v=2");
 
         if (sq instanceof PropertySquare prop) {
             dto.put("kind", "PROPERTY");
