@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cờ Tỷ Phú Việt Nam Online — Monopoly Web</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- ===================================================================== -->
+  <!-- MÀN HÌNH 1: SẢNH CHÍNH (LOBBY / TẠO & CHỌN PHÒNG)                      -->
+  <!-- ===================================================================== -->
+  <section id="view-landing" class="view">
+    <header class="hero-header">
+      <div class="hero-brand">
+        <img src="/assets/player/mr_monopoly.png" alt="Mr Monopoly" class="hero-logo" />
+        <div>
+          <h1>Cờ Tỷ Phú Việt Nam Online</h1>
+          <p>Chơi nhiều người theo thời gian thực • Hỗ trợ xem trực tiếp (Spectator) &amp; Bot AI</p>
+        </div>
+      </div>
+      <div class="hero-name-box">
+        <label for="input-name">Tên hiển thị của bạn</label>
+        <input id="input-name" type="text" maxlength="20" placeholder="Ví dụ: Minh Đức..." />
+      </div>
+    </header>
+
+    <main class="landing-grid">
+      <!-- Tạo phòng mới -->
+      <div class="card-panel">
+        <h2>🎲 Tạo Phòng Chơi Mới</h2>
+        <div class="form-group">
+          <label for="input-room-name">Tên phòng</label>
+          <input id="input-room-name" type="text" maxlength="32" placeholder="Bàn Cờ Tỷ Phú Cuối Tuần" />
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="input-max-players">Số người tối đa</label>
+            <select id="input-max-players">
+              <option value="2">2 người</option>
+              <option value="3">3 người</option>
+              <option value="4" selected>4 người</option>
+              <option value="5">5 người</option>
+              <option value="6">6 người</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="input-starting-balance">Tiền khởi điểm</label>
+            <select id="input-starting-balance">
+              <option value="1000">$1,000</option>
+              <option value="1500" selected>$1,500 (Chuẩn)</option>
+              <option value="2000">$2,000</option>
+              <option value="3000">$3,000</option>
+            </select>
+          </div>
+        </div>
+        <label class="checkbox-row">
+          <input id="input-public" type="checkbox" checked />
+          <span>Phòng công khai (hiện trong danh sách để mọi người vào chơi hoặc xem)</span>
+        </label>
+        <button id="btn-create-room" class="btn btn-primary btn-block">Tạo Phòng &amp; Vào Chơi</button>
+      </div>
+
+      <!-- Vào bằng mã phòng -->
+      <div class="card-panel">
+        <h2>🔗 Tham Gia Bằng Mã Phòng</h2>
+        <p class="muted">Nhập mã phòng 5 ký tự do bạn bè gửi để vào chơi hoặc theo dõi trận đấu trực tiếp.</p>
+        <div class="form-group">
+          <label for="input-join-code">Mã phòng</label>
+          <input id="input-join-code" type="text" maxlength="8" placeholder="VD: A7K3P" class="code-input" />
+        </div>
+        <div class="btn-row-2">
+          <button id="btn-join-player" class="btn btn-success">🎮 Vào Chơi</button>
+          <button id="btn-join-spectator" class="btn btn-secondary">👁️ Xem Trực Tiếp</button>
+        </div>
+        <div class="info-callout">
+          <strong>Chế độ Xem Online:</strong> Bất kỳ ai có mã phòng hoặc link xem đều có thể vào theo dõi ván đấu thời gian thực và nhắn chat cổ vũ mà không làm ảnh hưởng người đang chơi.
+        </div>
+      </div>
+
+      <!-- Danh sách phòng công khai -->
+      <div class="card-panel card-panel-wide">
+        <div class="panel-header-row">
+          <h2>🌐 Phòng Đang Hoạt Động Trực Tuyến</h2>
+          <button id="btn-refresh-rooms" class="btn btn-ghost btn-sm">↻ Làm mới</button>
+        </div>
+        <div id="public-rooms-list" class="rooms-list">
+          <div class="empty-state">Đang tải danh sách phòng...</div>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- MÀN HÌNH 2: PHÒNG CHỜ (WAITING ROOM)                                  -->
+  <!-- ===================================================================== -->
+  <section id="view-waiting" class="view hidden">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="room-pill">Phòng <strong id="wait-room-code">-----</strong></span>
+        <span id="wait-room-name" class="room-title">Phòng chơi</span>
+        <span id="wait-role-badge" class="role-badge"></span>
+      </div>
+      <div class="topbar-actions">
+        <button id="btn-wait-copy-play" class="btn btn-ghost btn-sm">📋 Copy Link Mời Chơi</button>
+        <button id="btn-wait-copy-watch" class="btn btn-ghost btn-sm">👁️ Copy Link Xem Online</button>
+        <button id="btn-wait-leave" class="btn btn-danger btn-sm">Rời phòng</button>
+      </div>
+    </header>
+
+    <div class="waiting-layout">
+      <div class="card-panel">
+        <div class="panel-header-row">
+          <h2>👥 Danh Sách Người Chơi (<span id="wait-player-count">0/4</span>)</h2>
+          <span class="muted">Tiền vốn: <strong id="wait-starting-balance">$1,500</strong></span>
+        </div>
+        <div id="wait-seats-list" class="seats-grid"></div>
+
+        <div id="wait-host-controls" class="host-controls hidden">
+          <div class="host-controls-row">
+            <button id="btn-add-bot" class="btn btn-secondary">🤖 + Thêm Bot AI</button>
+            <label class="checkbox-row inline-check">
+              <input id="chk-randomize-order" type="checkbox" checked />
+              <span>Bốc thăm thứ tự lượt ngẫu nhiên</span>
+            </label>
+          </div>
+          <button id="btn-start-game" class="btn btn-primary btn-lg btn-block">🚀 Bắt Đầu Ván Đấu</button>
+        </div>
+
+        <div id="wait-nonhost-note" class="info-callout hidden">
+          Đang chờ chủ phòng thêm người chơi / Bot và bấm <strong>Bắt đầu ván đấu</strong>...
+        </div>
+
+        <div class="spectators-strip">
+          <strong>👁️ Người đang xem (<span id="wait-spec-count">0</span>):</strong>
+          <span id="wait-spec-names" class="muted">Chưa có khán giả</span>
+        </div>
+      </div>
+
+      <div class="card-panel chat-panel-wait">
+        <h2>💬 Trò Chuyện Phòng Chờ</h2>
+        <div id="wait-chat-list" class="chat-messages"></div>
+        <form id="wait-chat-form" class="chat-form">
+          <input id="wait-chat-input" type="text" maxlength="240" placeholder="Nhắn tin với mọi người..." />
+          <button type="submit" class="btn btn-primary btn-sm">Gửi</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- MÀN HÌNH 3: BÀN CỜ TRỰC TUYẾN (LIVE GAME + SPECTATOR)                 -->
+  <!-- ===================================================================== -->
+  <section id="view-board" class="view hidden">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="room-pill">Mã <strong id="live-room-code">-----</strong></span>
+        <span id="live-turn-badge" class="turn-badge">Lượt #1</span>
+        <span id="live-spec-badge" class="spec-badge">👁️ 0 người xem</span>
+        <span id="live-role-banner" class="role-badge"></span>
+      </div>
+      <div class="topbar-actions">
+        <button id="btn-live-copy-play" class="btn btn-ghost btn-sm">📋 Link Chơi</button>
+        <button id="btn-live-copy-watch" class="btn btn-ghost btn-sm">👁️ Link Xem</button>
+        <button id="btn-surrender" class="btn btn-warning btn-sm hidden">🏳️ Đầu hàng</button>
+        <button id="btn-live-leave" class="btn btn-danger btn-sm">Thoát</button>
+      </div>
+    </header>
+
+    <div class="board-workspace">
+      <!-- Cột trái: Danh sách người chơi -->
+      <aside class="side-panel left-panel">
+        <div class="panel-title-sm">NGƯỜI CHƠI TRÊN BÀN</div>
+        <div id="live-players-list" class="players-stack"></div>
+      </aside>
+
+      <!-- Giữa: Bàn cờ 11x11 -->
+      <main class="board-stage">
+        <div class="board-grid" id="board-grid">
+          <div class="board-center">
+            <img src="/assets/board/board_center.png" alt="Bàn cờ Cờ Tỷ Phú" class="board-center-bg" />
+            <div class="center-hud">
+              <div class="center-turn-header">
+                <div id="center-turn-owner" class="center-turn-owner">Đang tải...</div>
+                <div id="center-turn-state" class="center-turn-state">---</div>
+              </div>
+
+              <div id="center-banner" class="center-banner">Chào mừng tới Cờ Tỷ Phú Việt Nam Online!</div>
+
+              <div class="dice-box" id="dice-box">
+                <img id="dice-img-1" src="/assets/dice/dice_1.png" alt="Xúc xắc 1" class="dice-img" />
+                <img id="dice-img-2" src="/assets/dice/dice_1.png" alt="Xúc xắc 2" class="dice-img" />
+                <div id="dice-total-badge" class="dice-total-badge hidden">7</div>
+              </div>
+
+              <div id="center-last-card" class="center-last-card hidden" title="Bấm để phóng to lá bài">
+                <img id="center-last-card-img" src="" alt="Thẻ bài" />
+                <div class="center-last-card-text">
+                  <div id="center-last-card-type" class="card-kicker"></div>
+                  <div id="center-last-card-title" class="card-title"></div>
+                  <div id="center-last-card-desc" class="card-desc"></div>
+                </div>
+              </div>
+
+              <div id="center-actions" class="center-actions"></div>
+
+              <div id="center-spectator-note" class="spectator-note hidden">
+                👁️ Bạn đang ở chế độ <strong>Xem Trực Tiếp</strong> — mọi diễn biến được cập nhật tức thì.
+              </div>
+            </div>
+          </div>
+          <!-- 40 ô cờ sẽ được render động bằng JS vào đây -->
+        </div>
+      </main>
+
+      <!-- Cột phải: Nhật ký + Chat -->
+      <aside class="side-panel right-panel">
+        <div class="tabs-bar">
+          <button id="tab-btn-logs" class="tab-btn active">📜 Nhật ký</button>
+          <button id="tab-btn-chat" class="tab-btn">💬 Chat <span id="chat-count-pill"></span></button>
+        </div>
+
+        <div id="tab-pane-logs" class="tab-pane active">
+          <div id="live-logs-list" class="logs-list"></div>
+        </div>
+
+        <div id="tab-pane-chat" class="tab-pane">
+          <div id="live-chat-list" class="chat-messages"></div>
+          <form id="live-chat-form" class="chat-form">
+            <input id="live-chat-input" type="text" maxlength="240" placeholder="Nhắn tin (cả người xem cũng chat được)..." />
+            <button type="submit" class="btn btn-primary btn-sm">Gửi</button>
+          </form>
+        </div>
+
+        <div class="spectators-mini">
+          <strong>👁️ Khán giả (<span id="live-spec-count-2">0</span>):</strong>
+          <span id="live-spec-names" class="muted">Không có</span>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- MODALS TƯƠNG TÁC                                                      -->
+  <!-- ===================================================================== -->
+
+  <!-- Modal Mua Đất -->
+  <div id="modal-buy" class="modal-backdrop hidden">
+    <div class="modal-card modal-sm">
+      <div class="modal-head">
+        <h3>🏷️ Cơ Hội Mua Tài Sản</h3>
+        <button class="modal-close" data-close="modal-buy">✕</button>
+      </div>
+      <div class="modal-body buy-body">
+        <img id="buy-card-img" src="" alt="" class="upright-preview" />
+        <div class="buy-info">
+          <h4 id="buy-name"></h4>
+          <p>Giá niêm yết: <strong id="buy-price" class="gold-text"></strong></p>
+          <p>Số dư hiện tại: <strong id="buy-balance"></strong></p>
+          <p>Còn lại sau khi mua: <strong id="buy-after"></strong></p>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button id="btn-confirm-buy" class="btn btn-success">✅ Mua Ngay</button>
+        <button id="btn-skip-buy" class="btn btn-secondary">⏭️ Bỏ Qua</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Chi Tiết Ô Đất -->
+  <div id="modal-square" class="modal-backdrop hidden">
+    <div class="modal-card modal-sm">
+      <div class="modal-head">
+        <h3 id="sq-modal-title">Chi tiết ô cờ</h3>
+        <button class="modal-close" data-close="modal-square">✕</button>
+      </div>
+      <div class="modal-body square-detail-body">
+        <img id="sq-modal-img" src="" alt="" class="upright-preview" />
+        <div id="sq-modal-details" class="sq-details-col"></div>
+      </div>
+      <div id="sq-modal-actions" class="modal-foot"></div>
+    </div>
+  </div>
+
+  <!-- Modal Thẻ Cơ Hội / Khí Vận -->
+  <div id="modal-card" class="modal-backdrop hidden">
+    <div class="modal-card modal-xs">
+      <div class="modal-head">
+        <h3 id="card-modal-type">🃏 Thẻ Sự Kiện</h3>
+        <button class="modal-close" data-close="modal-card">✕</button>
+      </div>
+      <div class="modal-body card-reveal-body">
+        <img id="card-modal-img" src="" alt="Lá bài" class="drawn-card-img" />
+        <div id="card-modal-player" class="muted"></div>
+        <h4 id="card-modal-title"></h4>
+        <p id="card-modal-desc"></p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-primary" data-close="modal-card">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Quản Lý Tài Sản Của Tôi -->
+  <div id="modal-assets" class="modal-backdrop hidden">
+    <div class="modal-card modal-lg">
+      <div class="modal-head">
+        <h3>🏠 Quản Lý Tài Sản &amp; Nâng Cấp Nhà</h3>
+        <button class="modal-close" data-close="modal-assets">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="my-assets-list" class="assets-manage-grid"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-secondary" data-close="modal-assets">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Tạo Giao Dịch (Trade) -->
+  <div id="modal-trade" class="modal-backdrop hidden">
+    <div class="modal-card modal-lg">
+      <div class="modal-head">
+        <h3>🤝 Thương Lượng &amp; Giao Dịch</h3>
+        <button class="modal-close" data-close="modal-trade">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="trade-partner-select">Chọn đối tác giao dịch</label>
+          <select id="trade-partner-select"></select>
+        </div>
+        <div class="trade-columns">
+          <div class="trade-col">
+            <h4>📤 Bạn đưa ra (<span id="trade-sender-name"></span>)</h4>
+            <div class="form-group">
+              <label>Tiền mặt ($ tối đa <span id="trade-sender-max-cash">0</span>)</label>
+              <input id="trade-offered-cash" type="number" min="0" value="0" />
+            </div>
+            <div class="form-group">
+              <label>Vé ra tù (hiện có <span id="trade-sender-max-tickets">0</span>)</label>
+              <input id="trade-offered-tickets" type="number" min="0" value="0" />
+            </div>
+            <label>Bất động sản đưa ra:</label>
+            <div id="trade-offered-assets" class="trade-asset-checklist"></div>
+          </div>
+
+          <div class="trade-col">
+            <h4>📥 Bạn yêu cầu từ <span id="trade-receiver-name">---</span></h4>
+            <div class="form-group">
+              <label>Tiền mặt ($ tối đa <span id="trade-receiver-max-cash">0</span>)</label>
+              <input id="trade-requested-cash" type="number" min="0" value="0" />
+            </div>
+            <div class="form-group">
+              <label>Vé ra tù (hiện có <span id="trade-receiver-max-tickets">0</span>)</label>
+              <input id="trade-requested-tickets" type="number" min="0" value="0" />
+            </div>
+            <label>Bất động sản yêu cầu:</label>
+            <div id="trade-requested-assets" class="trade-asset-checklist"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button id="btn-submit-trade" class="btn btn-primary">📩 Gửi Đề Nghị</button>
+        <button class="btn btn-secondary" data-close="modal-trade">Hủy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Phản Hồi Đề Nghị Giao Dịch -->
+  <div id="modal-trade-incoming" class="modal-backdrop hidden">
+    <div class="modal-card modal-md">
+      <div class="modal-head">
+        <h3>🔔 Đề Nghị Giao Dịch</h3>
+      </div>
+      <div id="trade-incoming-body" class="modal-body"></div>
+      <div id="trade-incoming-foot" class="modal-foot"></div>
+    </div>
+  </div>
+
+  <!-- Modal Kết Thúc Game -->
+  <div id="modal-gameover" class="modal-backdrop hidden">
+    <div class="modal-card modal-md">
+      <div class="modal-head">
+        <h3>🏆 Kết Quả Chung Cuộc</h3>
+      </div>
+      <div id="gameover-body" class="modal-body gameover-body"></div>
+      <div class="modal-foot">
+        <button id="btn-rematch" class="btn btn-primary hidden">🔄 Chơi Ván Mới</button>
+        <button id="btn-gameover-leave" class="btn btn-secondary">🏠 Về Sảnh Chính</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

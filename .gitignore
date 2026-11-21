@@ -1,0 +1,45 @@
+# Java / Compiled & Packaging
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Logs
+hs_err_pid*
+replay_pid*
+*.log
+
+# Build & Output Directories
+out/
+target/
+bin/
+build/
+.gradle/
+
+# IDEs & Editors
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.code-workspace
+.history/
+.classpath
+.project
+.settings/
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+desktop.ini
+*.swp
+*~
+*.bak
+
+# Local Tests
+Test*.java
